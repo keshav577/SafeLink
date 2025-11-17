@@ -1,0 +1,318 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>📊 Your Cyber Safety Dashboard</header>
+  
+  <nav>
+    <a href="/index.html">🏠 Home</a>
+    <a href="/learning.html">📚 Learning</a>
+    <a href="/quiz.html">🧠 Quizzes</a>
+    <a href="/simulation.html">🎮 Simulations</a>
+    <a href="/dashboard.html">📊 Dashboard</a>
+    <a href="/settings.html">⚙️ Settings</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  <div class="container">
+    <div id="dashboardContent">
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    async function loadDashboard() {
+      try {
+        const response = await fetch(`${API_URL}/dashboard`, {
+          headers: getHeaders()
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('dashboardContent').innerHTML = `
+          <div style="text-align: center; margin-bottom: 40px;">
+            <h2>Welcome back, ${data.user.username}! 👋</h2>
+            <p style="color: #aaa;">Level ${data.user.level} | ${data.user.xp} XP</p>
+          </div>
+          
+          <div class="stats">
+            <div class="stat-card">
+              <div class="score">${data.user.securityScore}%</div>
+              <p>Security Score</p>
+            </div>
+            <div class="stat-card">
+              <div class="score">${data.stats.lessonsCompleted}</div>
+              <p>Lessons Completed</p>
+            </div>
+            <div class="stat-card">
+              <div class="score">${data.stats.quizzesPassed}</div>
+              <p>Quizzes Passed</p>
+            </div>
+          </div>
+          
+          <div style="margin-top: 50px;">
+            <h2>🏆 Your Badges</h2>
+            <div class="badges-grid">
+              ${data.stats.badges.length > 0 ? 
+                data.stats.badges.map(badge => `
+                  <div class="badge earned">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <strong>${badge.name}</strong>
+                    <p style="font-size: 12px; color: #aaa; margin-top: 5px;">${badge.description}</p>
+                  </div>
+                `).join('') : 
+                '<p style="text-align: center; color: #aaa;">Complete lessons and quizzes to earn badges!</p>'
+              }
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 50px;">
+            <h3>Keep up the great work! 🚀</h3>
+            <a href="/learning.html" class="btn" style="margin-top: 20px;">Continue Learning</a>
+          </div>
+        `;
+      } catch (error) {
+        showAlert('Failed to load dashboard', 'error');
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>📊 Your Cyber Safety Dashboard</header>
+  
+  <nav>
+    <a href="/index.html">🏠 Home</a>
+    <a href="/learning.html">📚 Learning</a>
+    <a href="/quiz.html">🧠 Quizzes</a>
+    <a href="/simulation.html">🎮 Simulations</a>
+    <a href="/dashboard.html">📊 Dashboard</a>
+    <a href="/settings.html">⚙️ Settings</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  <div class="container">
+    <div id="dashboardContent">
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="/index.html">Home</a>
+      <a href="/help.html">Help Center</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+      <a href="mailto:support@safelink.com">Contact</a>
+    </div>
+    <p style="color: #666; margin-top: 20px;">&copy; 2024 SafeLink. All rights reserved.</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    async function loadDashboard() {
+      try {
+        // Fetch dashboard data
+        const response = await fetch(`${API_URL}/dashboard`, {
+          headers: getHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+        
+        const data = await response.json();
+        console.log('Dashboard data:', data);
+        
+        // Fetch recent activity
+        const activityResponse = await fetch(`${API_URL}/dashboard/activity`, {
+          headers: getHeaders()
+        });
+        
+        let recentActivity = [];
+        if (activityResponse.ok) {
+          recentActivity = await activityResponse.json();
+          console.log('Recent activity:', recentActivity);
+        }
+        
+        // Calculate next level XP
+        const currentLevel = data.user.level || 1;
+        const currentXP = data.user.xp || 0;
+        const xpForNextLevel = currentLevel * 100;
+        const xpProgress = currentXP % 100;
+        const xpPercentage = (xpProgress / 100) * 100;
+        
+        // Render dashboard
+        document.getElementById('dashboardContent').innerHTML = `
+          <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-size: 36px; margin-bottom: 10px;">
+              Welcome back, <span style="background: linear-gradient(to right, #4facfe, #00f2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${data.user.username}</span>! 👋
+            </h1>
+            <p style="color: #aaa; font-size: 18px;">Level ${data.user.level} • ${data.user.xp} XP</p>
+            
+            <div style="max-width: 600px; margin: 20px auto;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 14px; color: #aaa;">Level ${currentLevel}</span>
+                <span style="font-size: 14px; color: #aaa;">Level ${currentLevel + 1}</span>
+              </div>
+              <div class="progress-bar" style="height: 12px;">
+                <div class="progress-fill" style="width: ${xpPercentage}%"></div>
+              </div>
+              <p style="font-size: 14px; color: #aaa; margin-top: 8px;">
+                ${100 - xpProgress} XP to next level
+              </p>
+            </div>
+          </div>
+          
+          <div class="stats">
+            <div class="stat-card">
+              <div style="font-size: 48px; margin-bottom: 10px;">🛡️</div>
+              <div class="score">${data.user.securityScore}%</div>
+              <p>Security Score</p>
+              <p style="font-size: 12px; color: #aaa; margin-top: 5px;">
+                ${data.user.securityScore >= 80 ? 'Excellent!' : data.user.securityScore >= 60 ? 'Good' : 'Keep learning!'}
+              </p>
+            </div>
+            
+            <div class="stat-card">
+              <div style="font-size: 48px; margin-bottom: 10px;">📚</div>
+              <div class="score">${data.stats.lessonsCompleted}</div>
+              <p>Lessons Completed</p>
+              <a href="/learning.html" style="font-size: 12px; color: #4facfe; text-decoration: none;">Continue Learning →</a>
+            </div>
+            
+            <div class="stat-card">
+              <div style="font-size: 48px; margin-bottom: 10px;">🧠</div>
+              <div class="score">${data.stats.quizzesPassed}</div>
+              <p>Quizzes Passed</p>
+              ${data.stats.averageQuizScore > 0 ? `<p style="font-size: 12px; color: #aaa; margin-top: 5px;">Avg: ${data.stats.averageQuizScore}%</p>` : '<a href="/quiz.html" style="font-size: 12px; color: #4facfe; text-decoration: none;">Take a Quiz →</a>'}
+            </div>
+            
+            <div class="stat-card">
+              <div style="font-size: 48px; margin-bottom: 10px;">🎮</div>
+              <div class="score">${data.stats.simulationsCompleted}</div>
+              <p>Simulations Done</p>
+              <a href="/simulation.html" style="font-size: 12px; color: #4facfe; text-decoration: none;">Try Simulation →</a>
+            </div>
+            
+            <div class="stat-card">
+              <div style="font-size: 48px; margin-bottom: 10px;">⚡</div>
+              <div class="score">${data.user.level}</div>
+              <p>Current Level</p>
+              <p style="font-size: 12px; color: #aaa; margin-top: 5px;">${data.user.xp} total XP</p>
+            </div>
+            
+            <div class="stat-card">
+              <div style="font-size: 48px; margin-bottom: 10px;">🏆</div>
+              <div class="score">${data.stats.badges.length}</div>
+              <p>Badges Earned</p>
+              ${data.stats.badges.length > 0 ? '<p style="font-size: 12px; color: #aaa; margin-top: 5px;">View below ↓</p>' : '<p style="font-size: 12px; color: #aaa; margin-top: 5px;">Earn your first!</p>'}
+            </div>
+          </div>
+          
+          ${recentActivity.length > 0 ? `
+            <div style="margin-top: 50px;">
+              <h2 style="margin-bottom: 25px;">📋 Recent Activity</h2>
+              <div class="admin-section">
+                ${recentActivity.map(activity => `
+                  <div style="display: flex; align-items: center; gap: 15px; padding: 15px; border-bottom: 1px solid #263574; transition: background 0.3s;">
+                    <div style="font-size: 32px;">${activity.icon}</div>
+                    <div style="flex: 1;">
+                      <h4 style="margin: 0 0 5px 0;">${activity.title}</h4>
+                      <p style="font-size: 14px; color: #aaa; margin: 0;">
+                        ${activity.type === 'lesson' ? 'Completed lesson' : activity.type === 'quiz' ? 'Took quiz' : 'Completed simulation'}
+                        ${activity.score ? ` • Score: ${activity.score}%` : ''}
+                      </p>
+                    </div>
+                    <div style="text-align: right;">
+                      <p style="font-size: 12px; color: #aaa; margin: 0;">${formatDate(activity.date)}</p>
+                      ${activity.score >= 90 ? '<span style="color: #4ade80;">🌟</span>' : activity.score >= 70 ? '<span style="color: #fbbf24;">⭐</span>' : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <div style="margin-top: 50px;">
+            <h2 style="margin-bottom: 25px;">🏆 Your Badges</h2>
+            ${data.stats.badges.length > 0 ? `
+              <div class="badges-grid">
+                ${data.stats.badges.map(badge => `
+                  <div class="badge earned">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <strong>${badge.name}</strong>
+                    <p style="font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 5px;">${badge.description}</p>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div class="card" style="text-align: center; padding: 40px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">🏆</div>
+                <h3>No Badges Yet</h3>
+                <p style="color: #aaa; margin: 15px 0;">Complete lessons, ace quizzes, and master simulations to earn badges!</p>
+                <a href="/learning.html" class="btn" style="margin-top: 20px;">Start Learning</a>
+              </div>
+            `}
+          </div>
+          
+          <div style="text-align: center; margin-top: 50px;">
+            <h3>Keep up the great work! 🚀</h3>
+            <p style="color: #aaa; margin: 15px 0;">Your cybersecurity skills are improving every day!</p>
+            <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+              <a href="/learning.html" class="btn">Continue Learning</a>
+              <a href="/quiz.html" class="btn btn-secondary">Take a Quiz</a>
+              <a href="/simulation.html" class="btn btn-secondary">Try Simulation</a>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        showAlert('Failed to load dashboard. Please try again.', 'error');
+        document.getElementById('dashboardContent').innerHTML = `
+          <div class="card" style="text-align: center; padding: 40px;">
+            <h3 style="color: #f87171;">Failed to Load Dashboard</h3>
+            <p style="color: #aaa; margin: 15px 0;">Please refresh the page or try again later.</p>
+            <button class="btn" onclick="location.reload()">Refresh Page</button>
+          </div>
+        `;
+      }
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInSeconds = Math.floor((now - date) / 1000);
+      
+      if (diffInSeconds < 60) return 'Just now';
+      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+      
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Load dashboard on page load
+    loadDashboard();
+  </script>
+</body>
+</html>

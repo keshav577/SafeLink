@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Threat Detection Lab - SafeLink</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .lab-container {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .lab-header {
+      background: var(--bg-card);
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .timer-display {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .score-display {
+      text-align: right;
+    }
+
+    .tool-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .tool-card {
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      border: 3px solid transparent;
+      text-align: center;
+    }
+
+    .tool-card:hover {
+      border-color: var(--accent-blue);
+      transform: scale(1.05);
+    }
+
+    .tool-card.active {
+      border-color: var(--accent-green);
+      background: rgba(72, 187, 120, 0.1);
+    }
+
+    .tool-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .analysis-workspace {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 20px;
+    }
+
+    .workspace-main {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 30px;
+      min-height: 500px;
+    }
+
+    .workspace-sidebar {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .url-analyzer {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 15px;
+      background: var(--bg-card);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: white;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .url-input:focus {
+      border-color: var(--accent-blue);
+      outline: none;
+    }
+
+    .analysis-result {
+      background: var(--bg-card);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    .result-safe {
+      border-left-color: var(--accent-green);
+      background: rgba(72, 187, 120, 0.1);
+    }
+
+    .result-warning {
+      border-left-color: var(--accent-yellow);
+      background: rgba(237, 137, 54, 0.1);
+    }
+
+    .result-danger {
+      border-left-color: var(--accent-red);
+      background: rgba(245, 101, 101, 0.1);
+    }
+
+    .email-viewer {
+      background: white;
+      color: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .email-header {
+      background: #f5f5f5;
+      padding: 15px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .email-field {
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    .email-field strong {
+      display: inline-block;
+      width: 80px;
+    }
+
+    .email-body {
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .highlight-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+
+    .red-flag-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .red-flag-item {
+      padding: 10px;
+      margin: 8px 0;
+      background: var(--bg-secondary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .red-flag-item:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .red-flag-item.found {
+      border-left: 4px solid var(--accent-green);
+    }
+
+    .profile-scanner {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 20px;
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .profile-details {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .indicator-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .indicator-safe {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .indicator-suspicious {
+      background: var(--accent-yellow);
+      color: white;
+    }
+
+    .indicator-fake {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .permission-scanner {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .permission-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin: 8px 0;
+      background: var(--bg-card);
+      border-radius: 8px;
+    }
+
+    .risk-meter {
+      width: 100%;
+      height: 30px;
+      background: linear-gradient(90deg, 
+        var(--accent-green) 0%, 
+        var(--accent-green) 33%, 
+        var(--accent-yellow) 33%, 
+        var(--accent-yellow) 66%, 
+        var(--accent-red) 66%, 
+        var(--accent-red) 100%);
+      border-radius: 15px;
+      position: relative;
+      margin: 20px 0;
+    }
+
+    .risk-indicator {
+      position: absolute;
+      width: 4px;
+      height: 40px;
+      background: white;
+      top: -5px;
+      transition: left 0.5s;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .challenge-card {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    .challenge-timer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: var(--bg-card);
+      border-radius: 8px;
+    }
+
+    @media (max-width: 1024px) {
+      .analysis-workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🛡️ SafeLink</div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="learning-hub.html">Learning</a>
+      <a href="quiz.html">Quizzes</a>
+      <a href="simulation.html">Simulations</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
+    <div class="user-badge"></div>
+  </header>
+
+  <div class="lab-container">
+    <!-- Lab Header -->
+    <div class="lab-header">
+      <div>
+        <h1>🔍 Threat Detection Lab</h1>
+        <p style="color: var(--text-secondary); margin-top: 5px;">
+          Practice identifying security threats with interactive tools
+        </p>
+      </div>
+      <div class="score-display">
+        <div class="timer-display" id="lab-timer">15:00</div>
+        <div style="color: var(--text-secondary); font-size: 14px;">Time Remaining</div>
+        <div style="margin-top: 10px; font-size: 24px; color: var(--accent-green);">
+          Score: <strong id="lab-score">0</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tool Selector -->
+    <h2 style="margin-bottom: 20px;">🛠️ Select Your Analysis Tool</h2>
+    <div class="tool-selector">
+      <div class="tool-card active" onclick="loadTool('url-analyzer')">
+        <div class="tool-icon">🔗</div>
+        <h3>URL Analyzer</h3>
+        <p>Detect malicious links</p>
+      </div>
+
+      <div class="tool-card" onclick="loadTool('email-scanner')">
+        <div class="tool-icon">✉️</div>
+        <h3>Email Scanner</h3>
+        <p>Identify phishing emails</p>
+      </div>
+
+      <div class="tool-card" onclick="loadTool('profile-detector')">
+        <div class="tool-icon">👤</div>
+        <h3>Profile Detector</h3>
+        <p>Spot fake accounts</p>
+      </div>
+
+      <div class="tool-card" onclick="loadTool('permission-scanner')">
+        <div class="tool-icon">🔐</div>
+        <h3>Permission Scanner</h3>
+        <p>Check app permissions</p>
+      </div>
+
+      <div class="tool-card" onclick="loadTool('red-flag-finder')">
+        <div class="tool-icon">🚩</div>
+        <h3>Red Flag Finder</h3>
+        <p>Find 5 hidden threats</p>
+      </div>
+    </div>
+
+    <!-- Analysis Workspace -->
+    <div class="analysis-workspace">
+      <!-- Main Workspace -->
+      <div class="workspace-main" id="workspace-main">
+        
+        <!-- URL Analyzer Tool (Default) -->
+        <div id="tool-url-analyzer">
+          <h2>🔗 URL Analyzer</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            Paste a URL below to analyze it for potential threats
+          </p>
+
+          <div class="url-analyzer">
+            <label style="display: block; margin-bottom: 10px; font-weight: 600;">
+              Enter URL to Analyze:
+            </label>
+            <input 
+              type="text" 
+              class="url-input" 
+              id="url-input"
+              placeholder="https://example.com/suspicious-link"
+            />
+            <button class="btn btn-primary" onclick="analyzeURL()">🔍 Analyze URL</button>
+          </div>
+
+          <div id="url-results"></div>
+
+          <!-- Example URLs -->
+          <div style="margin-top: 30px;">
+            <h3 style="margin-bottom: 15px;">📝 Practice URLs:</h3>
+            <div class="challenge-card" onclick="testURL('https://paypa1.com/verify-account')">
+              <strong>Challenge 1:</strong> https://paypa1.com/verify-account
+            </div>
+            <div class="challenge-card" onclick="testURL('https://amazon.com.security-check.tk/login')">
+              <strong>Challenge 2:</strong> https://amazon.com.security-check.tk/login
+            </div>
+            <div class="challenge-card" onclick="testURL('https://google.com')">
+              <strong>Challenge 3:</strong> https://google.com
+            </div>
+            <div class="challenge-card" onclick="testURL('http://bit.ly/3xK9mP')">
+              <strong>Challenge 4:</strong> http://bit.ly/3xK9mP (Shortened URL)
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Scanner Tool (Hidden by default) -->
+        <div id="tool-email-scanner" style="display: none;">
+          <h2>✉️ Email Header Scanner</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            Examine this email and identify security risks
+          </p>
+
+          <div class="email-viewer">
+            <div class="email-header">
+              <div class="email-field">
+                <strong>From:</strong> security@paypa1-alerts.com
+              </div>
+              <div class="email-field">
+                <strong>To:</strong> you@company.com
+              </div>
+              <div class="email-field">
+                <strong>Subject:</strong> Urgent: Verify Your Account Now
+              </div>
+              <div class="email-field">
+                <strong>Date:</strong> Today at 3:42 AM
+              </div>
+              <div class="email-field">
+                <strong>Reply-To:</strong> noreply@suspicious-domain.tk
+              </div>
+            </div>
+
+            <div class="email-body">
+              <p>Dear Valued Customer,</p>
+              
+              <div class="highlight-box">
+                <strong>⚠️ URGENT ACTION REQUIRED</strong>
+              </div>
+
+              <p>We have detected unusual activity on your PayPal account. Your account will be <strong>permanently suspended</strong> within 24 hours unless you verify your information immediately.</p>
+
+              <p><a href="#" style="color: #0066cc; text-decoration: underline;">Click here to verify your account</a></p>
+
+              <p>Failure to comply will result in account termination and legal action.</p>
+
+              <p>Sincerly,<br>
+              PayPal Security Team<br>
+              <em>This is an automated message, do not reply</em></p>
+            </div>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <h3>🎯 Identify the Red Flags:</h3>
+            <ul class="red-flag-list" id="red-flag-list">
+              <li class="red-flag-item" onclick="flagFound(this, 'sender')">
+                <span>🔴</span>
+                <span>Suspicious sender domain</span>
+              </li>
+              <li class="red-flag-item" onclick="flagFound(this, 'urgency')">
+                <span>🔴</span>
+                <span>Urgency and threats</span>
+              </li>
+              <li class="red-flag-item" onclick="flagFound(this, 'grammar')">
+                <span>🔴</span>
+                <span>Spelling/grammar errors</span>
+              </li>
+              <li class="red-flag-item" onclick="flagFound(this, 'generic')">
+                <span>🔴</span>
+                <span>Generic greeting</span>
+              </li>
+              <li class="red-flag-item" onclick="flagFound(this, 'reply')">
+                <span>🔴</span>
+                <span>Different reply-to address</span>
+              </li>
+              <li class="red-flag-item" onclick="flagFound(this, 'time')">
+                <span>🔴</span>
+                <span>Sent at unusual time (3:42 AM)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Profile Detector Tool -->
+        <div id="tool-profile-detector" style="display: none;">
+          <h2>👤 Fake Profile Detector</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            Analyze this social media profile for signs of fraud
+          </p>
+
+          <div class="profile-scanner">
+            <img src="https://via.placeholder.com/100" alt="Profile" class="profile-avatar" />
+            
+            <div class="profile-details">
+              <h3>Sarah Johnson <span class="indicator-badge indicator-suspicious">Suspicious</span></h3>
+              <div style="font-size: 14px; color: #666;">@sarahjohnson2024_official</div>
+              <div style="font-size: 14px; color: #666;">📍 New York, USA</div>
+              <div style="font-size: 14px; color: #666;">👥 45 followers • 2,547 following</div>
+              <div style="font-size: 14px; color: #666;">📅 Joined March 2024</div>
+              <div style="font-size: 14px; color: #666;">✉️ 0 posts</div>
+            </div>
+          </div>
+
+          <div style="background: white; color: #000; padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <p style="font-style: italic;">"CEO at Tech Innovations Inc. Harvard Graduate. Cryptocurrency investor. DM me for business opportunities! 💰"</p>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <h3>🔍 Analysis Indicators:</h3>
+            
+            <div class="analysis-result result-danger">
+              <strong>⚠️ Account Age:</strong> Created 2 days ago
+            </div>
+
+            <div class="analysis-result result-danger">
+              <strong>⚠️ Follower Ratio:</strong> Following 56x more than followers
+            </div>
+
+            <div class="analysis-result result-danger">
+              <strong>⚠️ Content:</strong> No posts despite claiming to be CEO
+            </div>
+
+            <div class="analysis-result result-warning">
+              <strong>⚠️ Username:</strong> Contains year and "official" (common fake pattern)
+            </div>
+
+            <div class="analysis-result result-danger">
+              <strong>⚠️ Bio:</strong> Vague credentials, crypto mention (red flag)
+            </div>
+
+            <button class="btn btn-danger" style="margin-top: 20px;">
+              🚨 Report as Fake Profile
+            </button>
+            <button class="btn btn-secondary" style="margin-top: 20px; margin-left: 10px;">
+              👀 Analyze Another Profile
+            </button>
+          </div>
+        </div>
+
+        <!-- Permission Scanner Tool -->
+        <div id="tool-permission-scanner" style="display: none;">
+          <h2>🔐 App Permission Scanner</h2>
+          <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            Review these app permissions and identify excessive requests
+          </p>
+
+          <div class="permission-scanner">
+            <h3 style="margin-bottom: 20px;">
+              📱 Flashlight App
+              <span style="font-size: 14px; color: var(--text-secondary); font-weight: normal;">
+                (Free Utility)
+              </span>
+            </h3>
+
+            <div class="permission-item">
+              <div>
+                <strong>📸 Camera Access</strong>
+                <div style="font-size: 12px; color: var(--text-secondary);">Required for flashlight</div>
+              </div>
+              <span class="indicator-badge indicator-safe">Reasonable</span>
+            </div>
+
+            <div class="permission-item">
+              <div>
+                <strong>📞 Phone & Contacts</strong>
+                <div style="font-size: 12px; color: var(--text-secondary);">Read contact list</div>
+              </div>
+              <span class="indicator-badge indicator-suspicious">Suspicious</span>
+            </div>
+
+            <div class="permission-item">
+              <div>
+                <strong>📍 Location (Always)</strong>
+                <div style="font-size: 12px; color: var(--text-secondary);">Track location even when app closed</div>
+              </div>
+              <span class="indicator-badge indicator-fake">Dangerous</span>
+            </div>
+
+            <div class="permission-item">
+              <div>
+                <strong>💾 Storage</strong>
+                <div style="font-size: 12px; color: var(--text-secondary);">Read/modify all files</div>
+              </div>
+              <span class="indicator-badge indicator-suspicious">Suspicious</span>
+            </div>
+
+            <div class="permission-item">
+              <div>
+                <strong>🌐 Internet Access</strong>
+                <div style="font-size: 12px; color: var(--text-secondary);">Send/receive data</div>
+              </div>
+              <span class="indicator-badge indicator-suspicious">Suspicious</span>
+            </div>
+
+            <div class="permission-item">
+              <div>
+                <strong>📱 Device ID & Call Info</strong>
+                <div style="font-size: 12px; color: var(--text-secondary);">Read phone status</div>
+              </div>
+              <span class="indicator-badge indicator-fake">Dangerous</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <h3>Risk Assessment:</h3>
+            <div class="risk-meter">
+              <div class="risk-indicator" style="left: 75%;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+              <span>Low Risk</span>
+              <span>Medium</span>
+              <span>High Risk</span>
+            </div>
+
+            <div class="analysis-result result-danger" style="margin-top: 20px;">
+              <strong>⚠️ HIGH RISK:</strong> This flashlight app requests excessive permissions unrelated to its function. 
+              It can access your contacts, track your location 24/7, and read all your files. This is typical spyware behavior.
+            </div>
+
+            <button class="btn btn-danger" style="margin-top: 20px;">
+              🗑️ Uninstall This App
+            </button>
+            <button class="btn btn-secondary" style="margin-top: 20px; margin-left: 10px;">
+              📊 Scan Another App
+            </button>
+          </div>
+        </div>
+
+        <!-- Red Flag Finder Game -->
+        <div id="tool-red-flag-finder" style="display: none;">
+          <div class="challenge-timer">
+            <h2 style="margin: 0;">🚩 Red Flag Finder Challenge</h2>
+            <div>
+              <div style="font-size: 24px; font-weight: 700; color: var(--accent-blue);" id="challenge-timer">2:00</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Time Left</div>
+            </div>
+          </div>
+
+          <p style="color: var(--text-secondary); margin-bottom: 30px;">
+            Find all 5 red flags in this scenario as quickly as possible!
+          </p>
+
+          <div style="background: white; color: #000; padding: 30px; border-radius: 12px;">
+            <h3>Email from: prize-notification@winner-dept.tk</h3>
+            <hr style="margin: 15px 0; border-color: #ddd;" />
+            
+            <p><strong>Subject:</strong> CONGRATULATIONS!!! YOU WON $1,000,000!!!</p>
+            
+            <p>Dear Winner,</p>
+
+            <p>Congratilations! Your email has been randomly selected in our international lottery draw. You have won <strong>ONE MILLION DOLLARS ($1,000,000 USD)</strong>!</p>
+
+            <p>To claim your prize, you must:</p>
+            <ol>
+              <li>Click this link immediately: <span style="color: blue; text-decoration: underline; cursor: pointer;" onclick="findFlag(1)">http://claim-prize-now.tk/winner</span></li>
+              <li>Provide your full name, address, and social security number</li>
+              <li>Pay a small processing fee of $500 via Western Union</li>
+            </ol>
+
+            <p><span style="background: yellow; padding: 2px 5px; cursor: pointer;" onclick="findFlag(2)">ACT NOW! This offer expires in 24 hours!</span></p>
+
+            <p>Please do not share this information with anyone as it is confidential.</p>
+
+            <p><span style="cursor: pointer;" onclick="findFlag(3)">Best Regards,</span><br>
+            <span style="cursor: pointer;" onclick="findFlag(4)">International Lottery Comission</span><br>
+            <span style="cursor: pointer;" onclick="findFlag(5)">CEO: Prince Mohammed Al-Fayed</span></p>
+
+            <p style="font-size: 10px; color: #888;">This message was sent from an automated system. Do not reply to this email.</p>
+          </div>
+
+          <div style="margin-top: 30px; background: var(--bg-secondary); padding: 20px; border-radius: 12px;">
+            <h3>🎯 Red Flags Found: <span id="flags-found">0</span>/5</h3>
+            <div id="found-flags-list"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <div class="workspace-sidebar">
+        <h3 style="margin-bottom: 15px;">📊 Statistics</h3>
+        
+        <div class="stat-box" style="margin-bottom: 15px;">
+          <div style="font-size: 32px; font-weight: 700; color: var(--accent-blue);" id="threats-found">0</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Threats Detected</div>
+        </div>
+
+        <div class="stat-box" style="margin-bottom: 15px;">
+          <div style="font-size: 32px; font-weight: 700; color: var(--accent-green);" id="accuracy-rate">0%</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Accuracy Rate</div>
+        </div>
+
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;" />
+
+        <h3 style="margin-bottom: 15px;">💡 Quick Tips</h3>
+        <div id="tips-content">
+          <div class="info-box" style="font-size: 13px;">
+            <strong>URL Analysis Tips:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+              <li>Check for misspellings in domain</li>
+              <li>Look for HTTPS (not just HTTP)</li>
+              <li>Verify the actual domain (before first /)</li>
+              <li>Be cautious of URL shorteners</li>
+            </ul>
+          </div>
+        </div>
+
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;" />
+
+        <h3 style="margin-bottom: 15px;">🏆 Today's Challenges</h3>
+        <div class="challenge-card">
+          <strong>Analyze 5 URLs</strong>
+          <div class="progress-bar" style="margin-top: 10px;">
+            <div class="progress-fill" style="width: 0%;" id="url-progress"></div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+            <span id="url-count">0</span>/5 completed
+          </div>
+        </div>
+
+        <div class="challenge-card">
+          <strong>Find All Red Flags</strong>
+          <div class="progress-bar" style="margin-top: 10px;">
+            <div class="progress-fill" style="width: 0%;" id="flag-progress"></div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+            <span id="flag-count">0</span>/5 found
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    let labStats = {
+      threatsFound: 0,
+      totalAnalyses: 0,
+      urlsAnalyzed: 0,
+      flagsFound: 0,
+      score: 0
+    };
+
+    let challengeTimer = 120; // 2 minutes
+    let challengeInterval;
+
+    // Lab Timer
+    let labTime = 900; // 15 minutes
+    setInterval(() => {
+      if (labTime > 0) {
+        labTime--;
+        const minutes = Math.floor(labTime / 60);
+        const seconds = labTime % 60;
+        document.getElementById('lab-timer').textContent = 
+          `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+    }, 1000);
+
+    function loadTool(toolName) {
+      // Remove active class from all tools
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+
+      // Hide all tools
+      document.querySelectorAll('[id^="tool-"]').forEach(tool => {
+        tool.style.display = 'none';
+      });
+
+      // Show selected tool
+      document.getElementById('tool-' + toolName).style.display = 'block';
+
+      // Update tips
+      updateTips(toolName);
+
+      // Start challenge timer for red-flag-finder
+      if (toolName === 'red-flag-finder') {
+        startChallengeTimer();
+      } else if (challengeInterval) {
+        clearInterval(challengeInterval);
+      }
+    }
+
+    function updateTips(toolName) {
+      const tips = {
+        'url-analyzer': `
+          <div class="info-box" style="font-size: 13px;">
+            <strong>URL Analysis Tips:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+              <li>Check for misspellings in domain</li>
+              <li>Look for HTTPS (not just HTTP)</li>
+              <li>Verify the actual domain (before first /)</li>
+              <li>Be cautious of URL shorteners</li>
+            </ul>
+          </div>
+        `,
+        'email-scanner': `
+          <div class="info-box" style="font-size: 13px;">
+            <strong>Email Red Flags:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+              <li>Mismatched sender domain</li>
+              <li>Urgent threatening language</li>
+              <li>Generic greetings</li>
+              <li>Grammar/spelling errors</li>
+              <li>Suspicious links or attachments</li>
+            </ul>
+          </div>
+        `,
+        'profile-detector': `
+          <div class="info-box" style="font-size: 13px;">
+            <strong>Fake Profile Signs:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+              <li>Very new account</li>
+              <li>Few/no posts</li>
+              <li>Stock photo avatar</li>
+              <li>Vague bio with crypto mentions</li>
+              <li>Odd follower ratio</li>
+            </ul>
+          </div>
+        `,
+        'permission-scanner': `
+          <div class="info-box" style="font-size: 13px;">
+            <strong>Permission Red Flags:</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+              <li>Requests unrelated to app function</li>
+              <li>Always-on location tracking</li>
+              <li>Access to contacts/messages</li>
+              <li>Full storage access</li>
+            </ul>
+          </div>
+        `,
+        'red-flag-finder': `
+          <div class="info-box" style="font-size: 13px;">
+            <strong>Click on suspicious elements!</strong>
+            <ul style="margin-top: 10px; padding-left: 20px;">
+              <li>Find all 5 red flags</li>
+              <li>Complete before time runs out</li>
+              <li>Each flag is worth 20 points</li>
+            </ul>
+          </div>
+        `
+      };
+
+      document.getElementById('tips-content').innerHTML = tips[toolName] || '';
+    }
+
+    function analyzeURL() {
+      const url = document.getElementById('url-input').value.trim();
+      if (!url) {
+        SafeLink.showNotification('Please enter a URL', 'error');
+        return;
+      }
+
+      labStats.totalAnalyses++;
+      labStats.urlsAnalyzed++;
+      updateProgress();
+
+      const results = performURLAnalysis(url);
+      displayURLResults(results);
+    }
+
+    function testURL(url) {
+      document.getElementById('url-input').value = url;
+      analyzeURL();
+    }
+
+    function performURLAnalysis(url) {
+      const results = {
+        url: url,
+        isThreat: false,
+        findings: []
+      };
+
+      // Check for HTTPS
+      if (!url.startsWith('https://')) {
+        results.findings.push({
+          severity: 'warning',
+          finding: 'No HTTPS encryption',
+          detail: 'This URL does not use secure HTTPS protocol'
+        });
+      }
+
+      // Check for common phishing patterns
+      const phishingPatterns = [
+        { pattern: /paypa1|paypal-|paypai/i, name: 'PayPal' },
+        { pattern: /amazon.*\.tk|amaz0n/i, name: 'Amazon' },
+        { pattern: /g00gle|google-|goog1e/i, name: 'Google' },
+        { pattern: /micros0ft|microsoft-/i, name: 'Microsoft' }
+      ];
+
+      phishingPatterns.forEach(p => {
+        if (p.pattern.test(url)) {
+          results.isThreat = true;
+          results.findings.push({
+            severity: 'danger',
+            finding: `Possible ${p.name} impersonation`,
+            detail: 'Domain contains suspicious variation of legitimate brand'
+          });
+        }
+      });
+
+      // Check for suspicious TLDs
+      if (/\.(tk|ml|ga|cf|gq)/.test(url)) {
+        results.isThreat = true;
+        results.findings.push({
+          severity: 'danger',
+          finding: 'Suspicious top-level domain',
+          detail: 'This TLD is commonly used for phishing'
+        });
+      }
+
+      // Check for IP addresses
+      if (/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(url)) {
+        results.findings.push({
+          severity: 'warning',
+          finding: 'IP address instead of domain',
+          detail: 'Legitimate sites rarely use IP addresses'
+        });
+      }
+
+      // Check for URL shorteners
+      if (/(bit\.ly|tinyurl|goo\.gl)/.test(url)) {
+        results.findings.push({
+          severity: 'warning',
+          finding: 'Shortened URL',
+          detail: 'Cannot verify destination without clicking'
+        });
+      }
+
+      // Safe URLs
+      if (/^https:\/\/(www\.)?(google|amazon|microsoft|paypal)\.com/.test(url)) {
+        results.findings.push({
+          severity: 'safe',
+          finding: 'Legitimate domain verified',
+          detail: 'This appears to be an authentic website'
+        });
+      }
+
+      if (results.isThreat) {
+        labStats.threatsFound++;
+        labStats.score += 50;
+      } else if (results.findings.length === 0) {
+        results.findings.push({
+          severity: 'safe',
+          finding: 'No obvious threats detected',
+          detail: 'URL appears safe, but always verify before clicking'
+        });
+      }
+
+      updateStats();
+      return results;
+    }
+
+    function displayURLResults(results) {
+      const resultsDiv = document.getElementById('url-results');
+      
+      let html = `
+        <div style="margin-top: 30px;">
+          <h3>Analysis Results:</h3>
+          <div class="analysis-result ${results.isThreat ? 'result-danger' : 'result-safe'}">
+            <strong>${results.isThreat ? '🚨 THREAT DETECTED' : '✅ No Obvious Threats'}</strong>
+            <div style="margin-top: 10px; font-size: 14px; word-break: break-all;">
+              URL: ${results.url}
+            </div>
+          </div>
+      `;
+
+      results.findings.forEach(finding => {
+        html += `
+          <div class="analysis-result result-${finding.severity}">
+            <strong>${finding.finding}</strong>
+            <div style="margin-top: 5px; font-size: 13px;">${finding.detail}</div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      resultsDiv.innerHTML = html;
+    }
+
+    let foundFlags = new Set();
+
+    function flagFound(element, flagType) {
+      if (!element.classList.contains('found')) {
+        element.classList.add('found');
+        element.querySelector('span:first-child').textContent = '✅';
+        labStats.score += 20;
+        SafeLink.showNotification('Red flag identified! +20 points', 'success');
+        updateStats();
+      }
+    }
+
+    function findFlag(flagNumber) {
+      if (foundFlags.has(flagNumber)) return;
+      
+      foundFlags.add(flagNumber);
+      labStats.flagsFound++;
+      labStats.score += 20;
+      
+      const flagNames = {
+        1: 'Suspicious shortened link (.tk domain)',
+        2: 'Urgency tactics (24-hour deadline)',
+        3: 'Spelling error in "Congratilations"',
+        4: 'Fake organization name',
+        5: 'Impersonation attempt'
+      };
+
+      const foundList = document.getElementById('found-flags-list');
+      const flagDiv = document.createElement('div');
+      flagDiv.className = 'key-point';
+      flagDiv.style.marginTop = '10px';
+      flagDiv.innerHTML = `<strong>✅ Flag ${flagNumber}:</strong> ${flagNames[flagNumber]}`;
+      foundList.appendChild(flagDiv);
+
+      document.getElementById('flags-found').textContent = foundFlags.size;
+      document.getElementById('flag-progress').style.width = (foundFlags.size * 20) + '%';
+      document.getElementById('flag-count').textContent = foundFlags.size;
+
+      SafeLink.showNotification(`Flag ${flagNumber} found! +20 points`, 'success');
+      
+      if (foundFlags.size === 5) {
+        clearInterval(challengeInterval);
+        const bonus = Math.floor(challengeTimer * 2);
+        labStats.score += bonus;
+        SafeLink.showNotification(`🎉 All flags found! +${bonus} time bonus!`, 'success');
+      }
+
+      updateStats();
+    }
+
+    function startChallengeTimer() {
+      challengeTimer = 120;
+      foundFlags.clear();
+      document.getElementById('found-flags-list').innerHTML = '';
+      document.getElementById('flags-found').textContent = '0';
+      
+      if (challengeInterval) clearInterval(challengeInterval);
+      
+      challengeInterval = setInterval(() => {
+        challengeTimer--;
+        const minutes = Math.floor(challengeTimer / 60);
+        const seconds = challengeTimer % 60;
+        document.getElementById('challenge-timer').textContent = 
+          `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+        if (challengeTimer <= 0) {
+          clearInterval(challengeInterval);
+          SafeLink.showNotification('Time\'s up! Try again to beat your score.', 'info');
+        }
+      }, 1000);
+    }
+
+    function updateStats() {
+      document.getElementById('lab-score').textContent = labStats.score;
+      document.getElementById('threats-found').textContent = labStats.threatsFound;
+      
+      if (labStats.totalAnalyses > 0) {
+        const accuracy = Math.round((labStats.threatsFound / labStats.totalAnalyses) * 100);
+        document.getElementById('accuracy-rate').textContent = accuracy + '%';
+      }
+    }
+
+    function updateProgress() {
+      document.getElementById('url-progress').style.width = (labStats.urlsAnalyzed / 5 * 100) + '%';
+      document.getElementById('url-count').textContent = Math.min(labStats.urlsAnalyzed, 5);
+    }
+  </script>
+</body>
+</html>

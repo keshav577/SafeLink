@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Scenarios - SafeLink</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .scenario-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+
+    .scenario-screen {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.5s;
+    }
+
+    .scenario-image {
+      width: 100%;
+      height: 300px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      margin-bottom: 30px;
+    }
+
+    .scenario-text {
+      font-size: 18px;
+      line-height: 1.8;
+      margin-bottom: 30px;
+    }
+
+    .choice-buttons {
+      display: grid;
+      gap: 15px;
+    }
+
+    .choice-btn {
+      background: var(--bg-secondary);
+      border: 2px solid transparent;
+      padding: 20px;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      text-align: left;
+      transition: 0.3s;
+      font-size: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .choice-btn:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-card-hover);
+      transform: translateX(10px);
+    }
+
+    .choice-btn::before {
+      content: '→';
+      position: absolute;
+      right: 20px;
+      opacity: 0;
+      transition: 0.3s;
+    }
+
+    .choice-btn:hover::before {
+      opacity: 1;
+    }
+
+    .choice-btn.good {
+      border-left: 4px solid var(--accent-green);
+    }
+
+    .choice-btn.bad {
+      border-left: 4px solid var(--accent-red);
+    }
+
+    .choice-btn.neutral {
+      border-left: 4px solid var(--accent-yellow);
+    }
+
+    .outcome-panel {
+      background: var(--bg-secondary);
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+
+    .outcome-panel.success {
+      border-left: 4px solid var(--accent-green);
+      background: rgba(72, 187, 120, 0.1);
+    }
+
+    .outcome-panel.danger {
+      border-left: 4px solid var(--accent-red);
+      background: rgba(245, 101, 101, 0.1);
+    }
+
+    .outcome-panel.warning {
+      border-left: 4px solid var(--accent-yellow);
+      background: rgba(237, 137, 54, 0.1);
+    }
+
+    .score-panel {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: var(--bg-card);
+      padding: 20px;
+      border-radius: 12px;
+      width: 200px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .decision-tree {
+      margin-top: 30px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+
+    .tree-node {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+      padding: 10px;
+      background: var(--bg-card);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .tree-node.active {
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    @media (max-width: 768px) {
+      .score-panel {
+        position: static;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">🛡️ SafeLink</div>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="learning-hub.html">Learning</a>
+      <a href="quiz.html">Quizzes</a>
+      <a href="simulation.html">Simulations</a>
+      <a href="dashboard.html">Dashboard</a>
+    </nav>
+    <div class="user-badge"></div>
+  </header>
+
+  <!-- Score Panel -->
+  <div class="score-panel">
+    <h3 style="margin-bottom: 15px;">📊 Your Score</h3>
+    <div class="score-item">
+      <span>Security</span>
+      <strong id="security-points">100</strong>
+    </div>
+    <div class="score-item">
+      <span>Privacy</span>
+      <strong id="privacy-points">100</strong>
+    </div>
+    <div class="score-item">
+      <span>Trust</span>
+      <strong id="trust-points">100</strong>
+    </div>
+    <div class="score-item" style="border: none;">
+      <span>Total</span>
+      <strong id="total-points" style="font-size: 20px; color: var(--accent-blue);">300</strong>
+    </div>
+    <div style="margin-top: 15px; font-size: 12px; color: var(--text-secondary);">
+      Decisions: <span id="decision-count">0</span>/10
+    </div>
+  </div>
+
+  <div class="scenario-container">
+    <div id="scenario-content">
+      <!-- Initial Screen -->
+      <div class="scenario-screen" id="screen-start">
+        <div class="scenario-image">🏢</div>
+        <h1>The Suspicious Email</h1>
+        <p class="scenario-text">
+          You're at work on a busy Monday morning. You've just sat down at your desk with your coffee 
+          when you notice an urgent email in your inbox. The subject line reads: 
+          <strong>"URGENT: Your account will be suspended in 24 hours"</strong>
+        </p>
+        <p class="scenario-text">
+          The email appears to be from your company's IT department. It states that there's been suspicious 
+          activity on your account and asks you to click a link to verify your credentials immediately.
+        </p>
+        <p class="scenario-text">
+          What do you do?
+        </p>
+        <div class="choice-buttons">
+          <button class="choice-btn" onclick="makeChoice('check-sender', 10, 0, 10)">
+            🔍 First, carefully check the sender's email address
+          </button>
+          <button class="choice-btn" onclick="makeChoice('click-link', -30, -20, -20)">
+            🖱️ Click the link immediately - it sounds urgent!
+          </button>
+          <button class="choice-btn" onclick="makeChoice('contact-it', 15, 5, 15)">
+            📞 Contact IT department directly through official channels
+          </button>
+          <button class="choice-btn" onclick="makeChoice('ignore', -10, 0, 0)">
+            🗑️ Delete the email and ignore it
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decision Tree -->
+    <div class="decision-tree" id="decision-tree" style="display: none;">
+      <h3>🌳 Your Decision Path</h3>
+      <div id="tree-content"></div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    let gameState = {
+      security: 100,
+      privacy: 100,
+      trust: 100,
+      decisions: 0,
+      path: ['start']
+    };
+
+    const scenarios = {
+      'check-sender': {
+        image: '🔍',
+        title: 'Investigating the Sender',
+        text: `
+          <p>Good instinct! You examine the sender's email address more closely.</p>
+          <p>The email shows: <code style="background: #1a1a2e; padding: 5px 10px; border-radius: 5px;">it-support@company-secure.net</code></p>
+          <p>Your company's actual IT email is: <code style="background: #1a1a2e; padding: 5px 10px; border-radius: 5px;">itsupport@yourcompany.com</code></p>
+          <p><strong>Red flag detected!</strong> The domain is different. This is likely a phishing attempt.</p>
+        `,
+        outcome: 'success',
+        outcomeText: '✅ Great job! You identified a key red flag. Checking the sender is always a crucial first step.',
+        choices: [
+          { text: '🚨 Report this email to your IT security team', next: 'report-email', points: [15, 10, 15] },
+          { text: '🗑️ Delete the email', next: 'delete-email', points: [5, 5, 0] },
+          { text: '💬 Forward it to colleagues to warn them', next: 'forward-warning', points: [-5, -15, 5] }
+        ]
+      },
+      'click-link': {
+        image: '⚠️',
+        title: 'You Clicked the Link',
+        text: `
+          <p>You clicked the link and were taken to a login page that looks almost identical to your company's portal.</p>
+          <p><strong>Danger!</strong> This is a fake phishing page designed to steal your credentials.</p>
+          <p>The URL shows: <code style="background: #1a1a2e; padding: 5px 10px; border-radius: 5px;">https://yourcompany-login.suspicious-domain.com</code></p>
+        `,
+        outcome: 'danger',
+        outcomeText: '❌ This was a phishing link! Always verify before clicking. Your hasty action could have compromised your account.',
+        choices: [
+          { text: '🛑 Close the page immediately and report to IT', next: 'recover-mistake', points: [10, 5, 10] },
+          { text: '📝 Enter your credentials (you already clicked)', next: 'enter-credentials', points: [-50, -40, -50] },
+          { text: '🔙 Hit the back button and pretend nothing happened', next: 'hide-mistake', points: [-15, -10, -25] }
+        ]
+      },
+      'contact-it': {
+        image: '📞',
+        title: 'Contacting IT Department',
+        text: `
+          <p>Excellent decision! You call your IT department using the number from your company directory.</p>
+          <p>The IT representative thanks you for calling and confirms:</p>
+          <ul style="margin-top: 10px;">
+            <li>✓ They did NOT send that email</li>
+            <li>✓ This is a known phishing campaign</li>
+            <li>✓ Several employees have already reported it</li>
+            <li>✓ Your account is completely safe</li>
+          </ul>
+        `,
+        outcome: 'success',
+        outcomeText: '🏆 Perfect response! Verifying through official channels is the gold standard for security.',
+        choices: [
+          { text: '📧 Ask IT how to identify such emails in the future', next: 'learn-more', points: [10, 5, 15] },
+          { text: '🎓 Request security awareness training for your team', next: 'request-training', points: [20, 10, 25] },
+          { text: '✅ Thank them and get back to work', next: 'end-success', points: [5, 5, 10] }
+        ]
+      },
+      'ignore': {
+        image: '🗑️',
+        title: 'Ignoring the Email',
+        text: `
+          <p>You deleted the email and moved on with your day.</p>
+          <p>While deleting suspicious emails isn't wrong, you missed an opportunity to:</p>
+          <ul style="margin-top: 10px;">
+            <li>Report the threat to IT security</li>
+            <li>Help protect your colleagues</li>
+            <li>Contribute to your organization's security</li>
+          </ul>
+        `,
+        outcome: 'warning',
+        outcomeText: '⚠️ Deleting is better than clicking, but reporting would have been even better.',
+        choices: [
+          { text: '💡 Realize you should report it and retrieve from trash', next: 'retrieve-report', points: [15, 5, 15] },
+          { text: '🤷 Continue with your work', next: 'end-neutral', points: [0, 0, 0] }
+        ]
+      },
+      'report-email': {
+        image: '🛡️',
+        title: 'Reporting to Security Team',
+        text: `
+          <p>You forward the suspicious email to security@yourcompany.com with a note about your concerns.</p>
+          <p>Within 10 minutes, you receive this response:</p>
+          <blockquote style="border-left: 3px solid var(--accent-blue); padding-left: 15px; margin: 15px 0;">
+            "Thank you for reporting this phishing attempt! Your vigilance prevented a potential security breach. 
+            We're alerting all employees and blocking the sender. You've earned a security champion badge!"
+          </blockquote>
+        `,
+        outcome: 'success',
+        outcomeText: '🌟 Exceptional! You not only protected yourself but helped protect your entire organization.',
+        choices: [
+          { text: '🎓 Take advanced security training', next: 'end-expert', points: [25, 15, 30] },
+          { text: '📱 Set up 2FA on all accounts as extra protection', next: 'end-expert', points: [30, 20, 25] }
+        ]
+      },
+      'delete-email': {
+        image: '🗑️',
+        title: 'Email Deleted',
+        text: `
+          <p>You deleted the phishing email. Crisis avoided!</p>
+          <p>However, the IT team later sends a company-wide alert about this exact phishing campaign affecting multiple employees.</p>
+          <p>Had you reported it earlier, you could have helped prevent others from falling victim.</p>
+        `,
+        outcome: 'warning',
+        outcomeText: '⚠️ You protected yourself, but reporting would have protected everyone.',
+        choices: [
+          { text: '📚 Learn from this and commit to reporting in the future', next: 'end-learned', points: [10, 5, 15] }
+        ]
+      },
+      'forward-warning': {
+        image: '📧',
+        title: 'Forwarding to Colleagues',
+        text: `
+          <p>You forwarded the phishing email to your colleagues with a warning message.</p>
+          <p><strong>Problem:</strong> One of your colleagues didn't read your warning carefully and clicked the link!</p>
+          <p>Additionally, forwarding phishing emails (even with warnings) can:</p>
+          <ul style="margin-top: 10px;">
+            <li>Trigger email security filters</li>
+            <li>Spread the malicious links further</li>
+            <li>Create confusion</li>
+          </ul>
+        `,
+        outcome: 'danger',
+        outcomeText: '❌ Good intentions, poor execution. Always report to IT instead of forwarding.',
+        choices: [
+          { text: '🚨 Report to IT immediately', next: 'late-report', points: [10, 5, 10] },
+          { text: '📖 Learn proper reporting procedures', next: 'end-learned', points: [15, 10, 15] }
+        ]
+      },
+      'recover-mistake': {
+        image: '🛡️',
+        title: 'Quick Recovery',
+        text: `
+          <p>You immediately close the suspicious page and call IT security.</p>
+          <p>The IT team:</p>
+          <ul style="margin-top: 10px;">
+            <li>✓ Appreciates your honesty</li>
+            <li>✓ Monitors your account for suspicious activity</li>
+            <li>✓ Requires you to change your password immediately</li>
+            <li>✓ Sets up 2-factor authentication</li>
+          </ul>
+          <p>Since you didn't enter any credentials, your account remains secure.</p>
+        `,
+        outcome: 'success',
+        outcomeText: '✅ Good recovery! Admitting mistakes quickly minimizes damage.',
+        choices: [
+          { text: '✅ Change password and enable 2FA', next: 'end-recovered', points: [20, 10, 20] }
+        ]
+      },
+      'enter-credentials': {
+        image: '💀',
+        title: 'Credentials Compromised',
+        text: `
+          <p>You entered your username and password on the fake page.</p>
+          <p><strong>Critical Security Breach!</strong></p>
+          <p>Within hours:</p>
+          <ul style="margin-top: 10px;">
+            <li>❌ Unauthorized access to your email</li>
+            <li>❌ Sensitive company data accessed</li>
+            <li>❌ Phishing emails sent from your account</li>
+            <li>❌ Your company faces potential data breach</li>
+            <li>❌ IT must lock down systems company-wide</li>
+          </ul>
+        `,
+        outcome: 'danger',
+        outcomeText: '🚨 Worst case scenario! This is why verification is critical. The consequences of phishing can be severe.',
+        choices: [
+          { text: '📚 Complete mandatory security training', next: 'end-breach', points: [-20, -15, -30] }
+        ]
+      },
+      'learn-more': {
+        image: '🎓',
+        title: 'Security Education',
+        text: `
+          <p>The IT representative is happy to teach you!</p>
+          <p><strong>Key Red Flags in Phishing Emails:</strong></p>
+          <ul style="margin-top: 10px;">
+            <li>🚩 Urgent or threatening language</li>
+            <li>🚩 Requests for sensitive information</li>
+            <li>🚩 Suspicious sender addresses</li>
+            <li>🚩 Generic greetings</li>
+            <li>🚩 Spelling/grammar errors</li>
+            <li>🚩 Mismatched URLs</li>
+            <li>🚩 Unexpected attachments</li>
+          </ul>
+          <p>You feel much more confident about identifying threats!</p>
+        `,
+        outcome: 'success',
+        outcomeText: '🌟 Knowledge is power! You\'re now better equipped to protect yourself and others.',
+        choices: [
+          { text: '🏆 Complete the scenario', next: 'end-expert', points: [15, 10, 20] }
+        ]
+      },
+      'request-training': {
+        image: '👥',
+        title: 'Team Security Training',
+        text: `
+          <p>You request security awareness training for your entire team.</p>
+          <p>Your manager is impressed by your initiative! The company schedules:</p>
+          <ul style="margin-top: 10px;">
+            <li>✓ Monthly security workshops</li>
+            <li>✓ Simulated phishing tests</li>
+            <li>✓ Security champion program</li>
+            <li>✓ You as the team security lead</li>
+          </ul>
+          <p>Your proactive approach creates a culture of security awareness!</p>
+        `,
+        outcome: 'success',
+        outcomeText: '🏆 Leadership! You\'ve made your entire organization safer.',
+        choices: [
+          { text: '🌟 Complete the scenario', next: 'end-champion', points: [30, 20, 40] }
+        ]
+      }
+    };
+
+    const endings = {
+      'end-success': {
+        title: '✅ Safe and Sound',
+        text: 'You handled the situation appropriately and avoided the phishing attack.',
+        rating: 'Good',
+        badge: '🛡️ Security Aware'
+      },
+      'end-expert': {
+        title: '🏆 Security Expert',
+        text: 'You demonstrated excellent security practices and learned valuable lessons!',
+        rating: 'Excellent',
+        badge: '🌟 Security Expert'
+      },
+      'end-champion': {
+        title: '👑 Security Champion',
+        text: 'You went above and beyond, protecting not just yourself but your entire organization!',
+        rating: 'Outstanding',
+        badge: '👑 Security Champion'
+      },
+      'end-learned': {
+        title: '📚 Lesson Learned',
+        text: 'You made some mistakes but learned from them. Growth mindset achieved!',
+        rating: 'Fair',
+        badge: '📚 Learning Journey'
+      },
+      'end-neutral': {
+        title: '😐 Could Be Better',
+        text: 'You avoided major harm, but there\'s room for improvement in your security practices.',
+        rating: 'Average',
+        badge: '⚠️ Needs Improvement'
+      },
+      'end-recovered': {
+        title: '💪 Quick Recovery',
+        text: 'You made a mistake but recovered quickly. Honesty and swift action saved the day!',
+        rating: 'Good',
+        badge: '💪 Resilient'
+      },
+      'end-breach': {
+        title: '🚨 Security Breach',
+        text: 'This scenario resulted in a serious security incident. Use this as a learning experience.',
+        rating: 'Poor',
+        badge: '⚠️ Needs Training'
+      }
+    };
+
+    function makeChoice(scenarioId, securityDelta, privacyDelta, trustDelta) {
+      // Update points
+      gameState.security = Math.max(0, Math.min(100, gameState.security + securityDelta));
+      gameState.privacy = Math.max(0, Math.min(100, gameState.privacy + privacyDelta));
+      gameState.trust = Math.max(0, Math.min(100, gameState.trust + trustDelta));
+      gameState.decisions++;
+      gameState.path.push(scenarioId);
+
+      updateScorePanel();
+      updateDecisionTree();
+
+      // Load next scenario
+      if (scenarios[scenarioId]) {
+        displayScenario(scenarioId, securityDelta, privacyDelta, trustDelta);
+      } else if (endings[scenarioId]) {
+        displayEnding(scenarioId);
+      }
+    }
+
+    function displayScenario(scenarioId, securityDelta, privacyDelta, trustDelta) {
+      const scenario = scenarios[scenarioId];
+      const content = document.getElementById('scenario-content');
+
+      // Show point changes
+      let pointsHTML = '';
+      if (securityDelta !== 0 || privacyDelta !== 0 || trustDelta !== 0) {
+        pointsHTML = `
+          <div class="outcome-panel ${scenario.outcome}">
+            <strong>${scenario.outcomeText}</strong>
+            <div style="margin-top: 10px; display: flex; gap: 15px;">
+              ${securityDelta !== 0 ? `<span>Security: ${securityDelta > 0 ? '+' : ''}${securityDelta}</span>` : ''}
+              ${privacyDelta !== 0 ? `<span>Privacy: ${privacyDelta > 0 ? '+' : ''}${privacyDelta}</span>` : ''}
+              ${trustDelta !== 0 ? `<span>Trust: ${trustDelta > 0 ? '+' : ''}${trustDelta}</span>` : ''}
+            </div>
+          </div>
+        `;
+      }
+
+      content.innerHTML = `
+        <div class="scenario-screen">
+          <div class="scenario-image">${scenario.image}</div>
+          <h2>${scenario.title}</h2>
+          <div class="scenario-text">${scenario.text}</div>
+          ${pointsHTML}
+          <div class="choice-buttons">
+            ${scenario.choices.map(choice => `
+              <button class="choice-btn" onclick="makeChoice('${choice.next}', ${choice.points[0]}, ${choice.points[1]}, ${choice.points[2]})">
+                ${choice.text}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function displayEnding(endingId) {
+      const ending = endings[endingId];
+      const totalScore = gameState.security + gameState.privacy + gameState.trust;
+      
+      const content = document.getElementById('scenario-content');
+      content.innerHTML = `
+        <div class="scenario-screen">
+          <div class="scenario-image">🎭</div>
+          <h1>${ending.title}</h1>
+          <div class="scenario-text">
+            <p><strong>${ending.text}</strong></p>
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="font-size: 48px; margin-bottom: 10px;">${ending.badge}</div>
+              <div style="font-size: 24px; color: var(--accent-blue);">Rating: ${ending.rating}</div>
+              <div style="font-size: 20px; margin-top: 20px;">Final Score: ${totalScore}/300</div>
+            </div>
+            
+            <div class="outcome-panel ${totalScore >= 250 ? 'success' : totalScore >= 150 ? 'warning' : 'danger'}">
+              <strong>Performance Breakdown:</strong>
+              <div style="margin-top: 10px;">
+                <div>🛡️ Security Awareness: ${gameState.security}/100</div>
+                <div>🔒 Privacy Protection: ${gameState.privacy}/100</div>
+                <div>🤝 Trust Building: ${gameState.trust}/100</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+              <h3>What You Learned:</h3>
+              <ul>
+                <li>✓ How to identify phishing emails</li>
+                <li>✓ Importance of verifying through official channels</li>
+                <li>✓ The impact of security decisions on organizations</li>
+                <li>✓ How to respond to suspicious communications</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button class="btn btn-primary" onclick="location.reload()">
+              🔄 Try Different Choices
+            </button>
+            <button class="btn btn-success" onclick="window.location.href='learning-hub.html'">
+              📚 Back to Learning
+            </button>
+            <button class="btn btn-secondary" onclick="window.location.href='quiz.html'">
+              🧠 Take Quiz
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Award XP based on performance
+      const xpEarned = Math.floor(totalScore / 3);
+      SafeLink.showNotification(`🎉 Scenario complete! +${xpEarned} XP earned`, 'success');
+    }
+
+    function updateScorePanel() {
+      document.getElementById('security-points').textContent = gameState.security;
+      document.getElementById('privacy-points').textContent = gameState.privacy;
+      document.getElementById('trust-points').textContent = gameState.trust;
+      document.getElementById('total-points').textContent = gameState.security + gameState.privacy + gameState.trust;
+      document.getElementById('decision-count').textContent = gameState.decisions;
+    }
+
+    function updateDecisionTree() {
+      const tree = document.getElementById('decision-tree');
+      const treeContent = document.getElementById('tree-content');
+      
+      tree.style.display = 'block';
+      
+      treeContent.innerHTML = gameState.path.map((step, index) => {
+        const isActive = index === gameState.path.length - 1;
+        const stepName = step.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return `
+          <div class="tree-node ${isActive ? 'active' : ''}">
+            <span>${index}.</span>
+            <span>${stepName}</span>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>

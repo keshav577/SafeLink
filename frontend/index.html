@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink - Cybersecurity Learning Platform</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>🔐 SafeLink</header>
+  
+  <nav>
+    <a href="/index.html">🏠 Home</a>
+    <a href="/learning.html">📚 Learning</a>
+    <a href="/quiz.html">🧠 Quizzes</a>
+    <a href="/simulation.html">🎮 Simulations</a>
+    <a href="/dashboard.html">📊 Dashboard</a>
+    <a href="/settings.html">⚙️ Settings</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  <div class="hero">
+    <!-- <h1>Learn. Detect. Stay Safe.</h1> -->
+    <p>Master cybersecurity through interactive learning, real-world simulations, and gamified challenges</p>
+    <a href="/learning.html" class="btn">Start Learning</a>
+    <a href="/quiz.html" class="btn btn-secondary">Take a Quiz</a>
+  </div>
+
+  <div class="container">
+    <h2 style="text-align: center; margin-bottom: 30px;">🎯 Why SafeLink?</h2>
+    
+    <div class="stats">
+      <div class="card">
+        <h3>🎓 Interactive Learning</h3>
+        <p>Engaging lessons with real-world scenarios and visual storytelling</p>
+      </div>
+      <div class="card">
+        <h3>🎮 Gamification</h3>
+        <p>Earn XP, unlock badges, and level up as you master cyber safety</p>
+      </div>
+      <div class="card">
+        <h3>🎭 Realistic Simulations</h3>
+        <p>Practice detecting phishing emails and malicious links in safe environment</p>
+      </div>
+      <div class="card">
+        <h3>📊 Track Progress</h3>
+        <p>Monitor your security score and see your improvement over time</p>
+      </div>
+      <div class="card">
+        <h3>🧠 Adaptive Learning</h3>
+        <p>Content adjusts to your skill level for optimal learning experience</p>
+      </div>
+      <div class="card">
+        <h3>🏆 Achievements</h3>
+        <p>Collect badges and compete on leaderboards</p>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 50px;">
+      <h2>🚀 Ready to become cyber-safe?</h2>
+      <a href="/onboarding.html" class="btn" style="margin-top: 20px;">Get Started Now</a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-links">
+      <a href="#">About Us</a>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">Help Center</a>
+      <a href="#">Contact</a>
+    </div>
+    <p style="color: #666; margin-top: 20px;">&copy; 2024 SafeLink. All rights reserved.</p>
+  </footer>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    // Override auth check for home page
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (!token && !window.location.pathname.includes('login')) {
+        // Redirect to login if not authenticated and not on login page
+        if (!window.location.pathname.includes('index.html') && window.location.pathname !== '/') {
+          window.location.href = '/login.html';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

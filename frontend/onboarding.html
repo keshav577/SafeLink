@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink - Sign Up</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>🔐 SafeLink Registration</header>
+
+  <div class="container">
+    <div class="form-container">
+      <h2 style="text-align: center; margin-bottom: 30px;">Create Your Account</h2>
+      
+      <div id="alertContainer"></div>
+      
+      <form id="registerForm">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="username" required placeholder="Choose a username" minlength="3" />
+        </div>
+        
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="email" required placeholder="your@email.com" />
+        </div>
+        
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="password" required placeholder="Min 8 characters" minlength="8" />
+        </div>
+        
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="confirmPassword" required placeholder="Re-enter password" minlength="8" />
+        </div>
+        
+        <div class="form-group">
+          <label>Your Skill Level</label>
+          <select id="skillLevel">
+            <option value="beginner">🌱 Beginner - New to cybersecurity</option>
+            <option value="intermediate">📚 Intermediate - Some knowledge</option>
+            <option value="advanced">🎓 Advanced - Experienced user</option>
+          </select>
+        </div>
+        
+        <button type="submit" class="btn" style="width: 100%;" id="submitBtn">Create Account</button>
+      </form>
+
+      <p style="text-align: center; margin-top: 20px; color: #aaa;">
+        Already have an account? <a href="/login.html" style="color: #4facfe;">Login</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    // Override checkAuth for signup page
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      if (token) {
+        // If already logged in, redirect to dashboard
+        window.location.href = '/dashboard.html';
+      }
+    }
+
+    function showAlert(message, type = 'info') {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+      
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = '';
+      container.appendChild(alertDiv);
+      
+      setTimeout(() => alertDiv.remove(), 5000);
+    }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const skillLevel = document.getElementById('skillLevel').value;
+      const submitBtn = document.getElementById('submitBtn');
+      
+      // Validation
+      if (username.length < 3) {
+        showAlert('Username must be at least 3 characters long', 'error');
+        return;
+      }
+      
+      if (password.length < 8) {
+        showAlert('Password must be at least 8 characters long', 'error');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        showAlert('Passwords do not match', 'error');
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showAlert('Please enter a valid email address', 'error');
+        return;
+      }
+      
+      // Disable submit button
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating Account...';
+      
+      try {
+        console.log('Attempting registration with:', { username, email, skillLevel });
+        
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, email, password, skillLevel })
+        });
+        
+        const data = await response.json();
+        console.log('Server response:', data);
+        
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('userId', data.userId);
+          localStorage.setItem('username', username);
+          
+          showAlert('Account created successfully! Redirecting...', 'success');
+          
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 1500);
+        } else {
+          showAlert(data.error || 'Registration failed. Please try again.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        showAlert('Server error. Please check if the server is running and try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+      }
+    });
+    
+    // Check auth on page load
+    checkAuth();
+  </script>
+</body>
+</html>

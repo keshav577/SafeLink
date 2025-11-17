@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink - Admin Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>👨‍💻 Admin Dashboard</header>
+  
+  <nav>
+    <a href="/index.html">🏠 Home</a>
+    <a href="/admin.html">👨‍💻 Admin</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  <div class="container">
+    <div class="admin-section">
+      <h2>📊 Analytics</h2>
+      <div id="analyticsData">
+        <div class="loader"></div>
+      </div>
+    </div>
+    
+    <div class="admin-section">
+      <h2>👥 Users</h2>
+      <div id="usersTable">
+        <div class="loader"></div>
+      </div>
+    </div>
+    
+    <div class="admin-section">
+      <h2>➕ Add New Module</h2>
+      <form id="addModuleForm">
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="moduleTitle" required />
+        </div>
+        <div class="form-group">
+          <label>Icon (emoji)</label>
+          <input type="text" id="moduleIcon" required />
+        </div>
+        <div class="form-group">
+          <label>Difficulty</label>
+          <select id="moduleDifficulty">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Estimated Time</label>
+          <input type="text" id="moduleTime" placeholder="e.g., 20 min" required />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="moduleCategory" required />
+        </div>
+        <button type="submit" class="btn">Add Module</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    async function loadAnalytics() {
+      try {
+        const response = await fetch(`${API_URL}/admin/analytics`, {
+          headers: getHeaders()
+        });
+        
+        const data = await response.json();
+        
+        document.getElementById('analyticsData').innerHTML = `
+          <div class="stats">
+            <div class="stat-card">
+              <div class="score">${data.totalUsers}</div>
+              <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+              <div class="score">${data.totalQuizAttempts}</div>
+              <p>Quiz Attempts</p>
+            </div>
+            <div class="stat-card">
+              <div class="score">${data.completedLessons}</div>
+              <p>Lessons Completed</p>
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        showAlert('Failed to load analytics', 'error');
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const response = await fetch(`${API_URL}/admin/users`, {
+          headers: getHeaders()
+        });
+        
+        const users = await response.json();
+        
+        document.getElementById('usersTable').innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Level</th>
+                <th>XP</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(user => `
+                <tr>
+                  <td>${user.id}</td>
+                  <td>${user.username}</td>
+                  <td>${user.email}</td>
+                  <td>${user.level}</td>
+                  <td>${user.xp}</td>
+                  <td>${formatDate(user.created_at)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      } catch (error) {
+        showAlert('Failed to load users', 'error');
+      }
+    }
+
+    document.getElementById('addModuleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const moduleData = {
+        title: document.getElementById('moduleTitle').value,
+        icon: document.getElementById('moduleIcon').value,
+        difficulty: document.getElementById('moduleDifficulty').value,
+        estimated_time: document.getElementById('moduleTime').value,
+        category: document.getElementById('moduleCategory').value,
+        content: { lessons: [] }
+      };
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/modules`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(moduleData)
+        });
+        
+        if (response.ok) {
+          showAlert('Module added successfully!', 'success');
+          e.target.reset();
+        } else {
+          showAlert('Failed to add module', 'error');
+        }
+      } catch (error) {
+        showAlert('Server error', 'error');
+      }
+    });
+
+    loadAnalytics();
+    loadUsers();
+  </script>
+</body>
+</html>

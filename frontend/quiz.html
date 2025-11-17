@@ -1,0 +1,742 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink Quizzes</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>🧠 SafeLink Cyber Quizzes</header>
+  
+  <nav>
+    <a href="/index.html">🏠 Home</a>
+    <a href="/learning.html">📚 Learning</a>
+    <a href="/quiz.html">🧠 Quizzes</a>
+    <a href="/simulation.html">🎮 Simulations</a>
+    <a href="/dashboard.html">📊 Dashboard</a>
+    <a href="/settings.html">⚙️ Settings</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  <div class="container"> -->
+    <!-- Quiz List View -->
+    <!-- <div id="quizListView">
+      <h2>📝 Available Quizzes</h2>
+      <p style="color: #aaa; margin-bottom: 30px;">Test your cybersecurity knowledge</p>
+      
+      <div id="quizList">
+        <div class="loader"></div>
+      </div>
+    </div>
+     -->
+    <!-- Quiz Taking View -->
+    <!-- <div id="quizTakingView" style="display: none;">
+      <button class="btn btn-secondary" onclick="backToList()" style="margin-bottom: 20px;">
+        ← Back to Quizzes
+      </button>
+      
+      <div class="admin-section">
+        <h2 id="quizTitle"></h2>
+        <div id="quizMeta" style="margin-bottom: 30px;"></div>
+        
+        <div id="questionsContainer"></div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn" onclick="submitQuiz()" id="submitBtn">
+            Submit Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+     -->
+    <!-- Results View -->
+    <!-- <div id="resultsView" style="display: none;">
+      <div class="admin-section">
+        <h2>📊 Quiz Results</h2>
+        
+        <div class="stats" style="margin: 30px 0;">
+          <div class="stat-card">
+            <div class="score" id="scorePercentage"></div>
+            <p>Your Score</p>
+          </div>
+          <div class="stat-card">
+            <div class="score" id="correctCount"></div>
+            <p>Correct Answers</p>
+          </div>
+          <div class="stat-card">
+            <div class="score" id="xpEarned"></div>
+            <p>XP Earned</p>
+          </div>
+        </div>
+        
+        <div id="resultsDetails"></div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn" onclick="backToList()">Back to Quizzes</button>
+          <button class="btn btn-secondary" onclick="retakeQuiz()">Retake Quiz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    let currentQuiz = null;
+    let userAnswers = [];
+    let quizData = null;
+
+    // Load all quizzes
+    async function loadQuizzes() {
+      try {
+        const response = await fetch(`${API_URL}/quiz`, {
+          headers: getHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch quizzes');
+        }
+        
+        const quizzes = await response.json();
+        console.log('Loaded quizzes:', quizzes);
+        
+        if (quizzes.length === 0) {
+          document.getElementById('quizList').innerHTML = `
+            <div class="card">
+              <p style="text-align: center; color: #aaa;">No quizzes available yet. Check back soon!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        const quizHTML = quizzes.map(quiz => `
+          <div class="quiz-card" onclick="startQuiz(${quiz.id})">
+            <div style="flex: 1;">
+              <h3>${quiz.title}</h3>
+              <div class="module-meta" style="margin-top: 10px;">
+                <span class="badge-tag">${quiz.difficulty}</span>
+                <span>❓ ${quiz.questions.length} Questions</span>
+              </div>
+            </div>
+            <div style="font-size: 32px;">▶️</div>
+          </div>
+        `).join('');
+        
+        document.getElementById('quizList').innerHTML = quizHTML;
+      } catch (error) {
+        console.error('Error loading quizzes:', error);
+        showAlert('Failed to load quizzes. Please try again.', 'error');
+        document.getElementById('quizList').innerHTML = `
+          <div class="card">
+            <p style="text-align: center; color: #f87171;">Failed to load quizzes. Please refresh the page.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Start a quiz
+    async function startQuiz(quizId) {
+      try {
+        const response = await fetch(`${API_URL}/quiz/${quizId}`, {
+          headers: getHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch quiz');
+        }
+        
+        quizData = await response.json();
+        currentQuiz = quizId;
+        userAnswers = new Array(quizData.questions.length).fill(null);
+        
+        console.log('Starting quiz:', quizData);
+        
+        // Show quiz taking view
+        document.getElementById('quizListView').style.display = 'none';
+        document.getElementById('quizTakingView').style.display = 'block';
+        document.getElementById('resultsView').style.display = 'none';
+        
+        // Set quiz title and meta
+        document.getElementById('quizTitle').textContent = quizData.title;
+        document.getElementById('quizMeta').innerHTML = `
+          <div class="module-meta">
+            <span class="badge-tag">${quizData.difficulty}</span>
+            <span>❓ ${quizData.questions.length} Questions</span>
+          </div>
+        `;
+        
+        // Render questions
+        renderQuestions();
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+      } catch (error) {
+        console.error('Error starting quiz:', error);
+        showAlert('Failed to load quiz. Please try again.', 'error');
+      }
+    }
+
+    // Render quiz questions
+    function renderQuestions() {
+      const questionsHTML = quizData.questions.map((q, qIndex) => `
+        <div class="quiz-question" id="question-${qIndex}">
+          <h3>Question ${qIndex + 1}</h3>
+          <p style="font-size: 18px; margin: 15px 0 20px 0;">${q.question}</p>
+          
+          <div class="quiz-options">
+            ${q.options.map((option, oIndex) => `
+              <label class="quiz-option" id="option-${qIndex}-${oIndex}">
+                <input 
+                  type="radio" 
+                  name="question-${qIndex}" 
+                  value="${oIndex}"
+                  onchange="selectAnswer(${qIndex}, ${oIndex})"
+                  style="margin-right: 10px;"
+                />
+                <span>${option}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+      
+      document.getElementById('questionsContainer').innerHTML = questionsHTML;
+    }
+
+    // Select an answer
+    function selectAnswer(questionIndex, optionIndex) {
+      userAnswers[questionIndex] = optionIndex;
+      console.log('Answer selected:', { questionIndex, optionIndex, userAnswers });
+      
+      // Visual feedback - remove selection from all options
+      const allOptions = document.querySelectorAll(`label[id^="option-${questionIndex}-"]`);
+      allOptions.forEach(opt => opt.classList.remove('selected'));
+      
+      // Add selection to chosen option
+      const selectedOption = document.getElementById(`option-${questionIndex}-${optionIndex}`);
+      if (selectedOption) {
+        selectedOption.classList.add('selected');
+      }
+    }
+
+    // Submit quiz
+    async function submitQuiz() {
+      // Check if all questions are answered
+      const unanswered = userAnswers.findIndex(answer => answer === null);
+      if (unanswered !== -1) {
+        showAlert(`Please answer question ${unanswered + 1} before submitting.`, 'error');
+        
+        // Scroll to unanswered question
+        const questionElement = document.getElementById(`question-${unanswered}`);
+        if (questionElement) {
+          questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          questionElement.style.border = '2px solid #f87171';
+          setTimeout(() => {
+            questionElement.style.border = '';
+          }, 2000);
+        }
+        return;
+      }
+      
+      // Disable submit button
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      try {
+        console.log('Submitting quiz answers:', userAnswers);
+        
+        const response = await fetch(`${API_URL}/quiz/${currentQuiz}/submit`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ answers: userAnswers })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to submit quiz');
+        }
+        
+        const results = await response.json();
+        console.log('Quiz results:', results);
+        
+        // Show results
+        showResults(results);
+        
+        // Show XP popup
+        if (results.xpGained > 0) {
+          setTimeout(() => showXPPopup(results.xpGained), 500);
+        }
+      } catch (error) {
+        console.error('Error submitting quiz:', error);
+        showAlert('Failed to submit quiz. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Quiz';
+      }
+    }
+
+    // Show results
+    function showResults(results) {
+      // Hide quiz taking view
+      document.getElementById('quizTakingView').style.display = 'none';
+      document.getElementById('resultsView').style.display = 'block';
+      
+      // Set score stats
+      document.getElementById('scorePercentage').textContent = `${results.score}%`;
+      document.getElementById('correctCount').textContent = `${results.correctCount}/${results.totalQuestions}`;
+      document.getElementById('xpEarned').textContent = `+${results.xpGained}`;
+      
+      // Generate detailed results
+      const detailsHTML = results.results.map((result, index) => {
+        const isCorrect = result.correct;
+        const userAnswerText = result.options[result.userAnswer];
+        const correctAnswerText = result.options[result.correctAnswer];
+        
+        return `
+          <div class="quiz-question">
+            <h4>Question ${index + 1}: ${result.question}</h4>
+            
+            <div class="quiz-option ${isCorrect ? 'correct' : 'incorrect'}" style="margin: 15px 0;">
+              <strong>Your answer:</strong> ${userAnswerText}
+              ${isCorrect ? '✅' : '❌'}
+            </div>
+            
+            ${!isCorrect ? `
+              <div class="quiz-option correct" style="margin: 15px 0;">
+                <strong>Correct answer:</strong> ${correctAnswerText} ✅
+              </div>
+            ` : ''}
+            
+            <div class="explanation">
+              <strong>💡 Explanation:</strong><br>
+              ${result.explanation}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      document.getElementById('resultsDetails').innerHTML = detailsHTML;
+      
+      // Scroll to top
+      window.scrollTo(0, 0);
+    }
+
+    // Retake quiz
+    function retakeQuiz() {
+      if (currentQuiz) {
+        startQuiz(currentQuiz);
+      }
+    }
+
+    // Back to quiz list
+    function backToList() {
+      document.getElementById('quizListView').style.display = 'block';
+      document.getElementById('quizTakingView').style.display = 'none';
+      document.getElementById('resultsView').style.display = 'none';
+      
+      currentQuiz = null;
+      userAnswers = [];
+      quizData = null;
+      
+      // Reset submit button
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Quiz';
+      }
+      
+      window.scrollTo(0, 0);
+    }
+
+    // Initialize
+    loadQuizzes();
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink Quizzes</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>🧠 SafeLink Cyber Quizzes</header>
+  
+  <nav>
+    <a href="/index.html">🏠 Home</a>
+    <a href="/learning.html">📚 Learning</a>
+    <a href="/quiz.html">🧠 Quizzes</a>
+    <a href="/simulation.html">🎮 Simulations</a>
+    <a href="/dashboard.html">📊 Dashboard</a>
+    <a href="/settings.html">⚙️ Settings</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+
+  <div class="container">
+    <!-- Quiz List View -->
+    <div id="quizListView">
+      <h2>📝 Available Quizzes</h2>
+      <p style="color: #aaa; margin-bottom: 30px;">Test your cybersecurity knowledge</p>
+      
+      <div id="quizList">
+        <div class="loader"></div>
+      </div>
+    </div>
+    
+    <!-- Quiz Taking View -->
+    <div id="quizTakingView" style="display: none;">
+      <button class="btn btn-secondary" onclick="backToList()" style="margin-bottom: 20px;">
+        ← Back to Quizzes
+      </button>
+      
+      <div class="admin-section">
+        <h2 id="quizTitle"></h2>
+        <div id="quizMeta" style="margin-bottom: 30px;"></div>
+        
+        <div id="questionsContainer"></div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn" onclick="submitQuiz()" id="submitBtn">
+            Submit Quiz
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Results View -->
+    <div id="resultsView" style="display: none;">
+      <div class="admin-section">
+        <h2>📊 Quiz Results</h2>
+        
+        <div class="stats" style="margin: 30px 0;">
+          <div class="stat-card">
+            <div class="score" id="scorePercentage"></div>
+            <p>Your Score</p>
+          </div>
+          <div class="stat-card">
+            <div class="score" id="correctCount"></div>
+            <p>Correct Answers</p>
+          </div>
+          <div class="stat-card">
+            <div class="score" id="xpEarned"></div>
+            <p>XP Earned</p>
+          </div>
+        </div>
+        
+        <div id="resultsDetails"></div>
+        
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn" onclick="backToList()">← Back to Quizzes</button>
+          <button class="btn btn-secondary" onclick="retakeQuiz()">🔄 Retake Quiz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    let currentQuiz = null;
+    let userAnswers = [];
+    let quizData = null;
+
+    // Load all quizzes
+    async function loadQuizzes() {
+      try {
+        const response = await fetch(`${API_URL}/quiz`, {
+          headers: getHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch quizzes');
+        }
+        
+        const quizzes = await response.json();
+        console.log('Loaded quizzes:', quizzes);
+        
+        if (quizzes.length === 0) {
+          document.getElementById('quizList').innerHTML = `
+            <div class="card">
+              <p style="text-align: center; color: #aaa;">No quizzes available yet. Check back soon!</p>
+            </div>
+          `;
+          return;
+        }
+        
+        const quizHTML = quizzes.map(quiz => `
+          <div class="quiz-card" onclick="startQuiz(${quiz.id})">
+            <div style="flex: 1;">
+              <h3>${quiz.title}</h3>
+              <div class="module-meta" style="margin-top: 10px;">
+                <span class="badge-tag">${quiz.difficulty}</span>
+                <span>❓ ${quiz.questions.length} Questions</span>
+              </div>
+            </div>
+            <div style="font-size: 32px;">▶️</div>
+          </div>
+        `).join('');
+        
+        document.getElementById('quizList').innerHTML = quizHTML;
+      } catch (error) {
+        console.error('Error loading quizzes:', error);
+        showAlert('Failed to load quizzes. Please try again.', 'error');
+        document.getElementById('quizList').innerHTML = `
+          <div class="card">
+            <p style="text-align: center; color: #f87171;">Failed to load quizzes. Please refresh the page.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Start a quiz
+    async function startQuiz(quizId) {
+      try {
+        const response = await fetch(`${API_URL}/quiz/${quizId}`, {
+          headers: getHeaders()
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch quiz');
+        }
+        
+        quizData = await response.json();
+        currentQuiz = quizId;
+        userAnswers = new Array(quizData.questions.length).fill(null);
+        
+        console.log('Starting quiz:', quizData);
+        
+        // Show quiz taking view
+        document.getElementById('quizListView').style.display = 'none';
+        document.getElementById('quizTakingView').style.display = 'block';
+        document.getElementById('resultsView').style.display = 'none';
+        
+        // Set quiz title and meta
+        document.getElementById('quizTitle').textContent = quizData.title;
+        document.getElementById('quizMeta').innerHTML = `
+          <div class="module-meta">
+            <span class="badge-tag">${quizData.difficulty}</span>
+            <span>❓ ${quizData.questions.length} Questions</span>
+          </div>
+        `;
+        
+        // Render questions
+        renderQuestions();
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+      } catch (error) {
+        console.error('Error starting quiz:', error);
+        showAlert('Failed to load quiz. Please try again.', 'error');
+      }
+    }
+
+    // Render quiz questions
+    function renderQuestions() {
+      const questionsHTML = quizData.questions.map((q, qIndex) => `
+        <div class="quiz-question" id="question-${qIndex}">
+          <h3>Question ${qIndex + 1} of ${quizData.questions.length}</h3>
+          <p style="font-size: 18px; margin: 15px 0 20px 0;">${q.question}</p>
+          
+          <div class="quiz-options">
+            ${q.options.map((option, oIndex) => `
+              <label class="quiz-option" id="option-${qIndex}-${oIndex}">
+                <input 
+                  type="radio" 
+                  name="question-${qIndex}" 
+                  value="${oIndex}"
+                  onchange="selectAnswer(${qIndex}, ${oIndex})"
+                  style="margin-right: 10px;"
+                />
+                <span>${option}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+      
+      document.getElementById('questionsContainer').innerHTML = questionsHTML;
+    }
+
+    // Select an answer
+    function selectAnswer(questionIndex, optionIndex) {
+      userAnswers[questionIndex] = optionIndex;
+      console.log('Answer selected:', { questionIndex, optionIndex, userAnswers });
+      
+      // Visual feedback - remove selection from all options
+      const allOptions = document.querySelectorAll(`label[id^="option-${questionIndex}-"]`);
+      allOptions.forEach(opt => opt.classList.remove('selected'));
+      
+      // Add selection to chosen option
+      const selectedOption = document.getElementById(`option-${questionIndex}-${optionIndex}`);
+      if (selectedOption) {
+        selectedOption.classList.add('selected');
+      }
+    }
+
+    // Submit quiz
+    async function submitQuiz() {
+      // Check if all questions are answered
+      const unanswered = userAnswers.findIndex(answer => answer === null);
+      if (unanswered !== -1) {
+        showAlert(`Please answer question ${unanswered + 1} before submitting.`, 'error');
+        
+        // Scroll to unanswered question
+        const questionElement = document.getElementById(`question-${unanswered}`);
+        if (questionElement) {
+          questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          questionElement.style.border = '2px solid #f87171';
+          setTimeout(() => {
+            questionElement.style.border = '';
+          }, 2000);
+        }
+        return;
+      }
+      
+      // Disable submit button
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      try {
+        console.log('Submitting quiz answers:', userAnswers);
+        
+        const response = await fetch(`${API_URL}/quiz/${currentQuiz}/submit`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ answers: userAnswers })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to submit quiz');
+        }
+        
+        const results = await response.json();
+        console.log('Quiz results received:', results);
+        
+        // Show results
+        showResults(results);
+        
+        // Show XP popup
+        if (results.xpGained > 0) {
+          setTimeout(() => showXPPopup(results.xpGained), 500);
+        }
+      } catch (error) {
+        console.error('Error submitting quiz:', error);
+        showAlert('Failed to submit quiz. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Quiz';
+      }
+    }
+
+    // Show results function - THIS WAS MISSING!
+    function showResults(results) {
+      console.log('Showing results:', results);
+      
+      // Hide quiz taking view, show results view
+      document.getElementById('quizTakingView').style.display = 'none';
+      document.getElementById('resultsView').style.display = 'block';
+      
+      // Display score statistics
+      const scorePercentage = results.score || 0;
+      const correctCount = results.correctCount || 0;
+      const totalQuestions = results.totalQuestions || quizData.questions.length;
+      const xpGained = results.xpGained || 0;
+      
+      document.getElementById('scorePercentage').textContent = `${scorePercentage}%`;
+      document.getElementById('correctCount').textContent = `${correctCount}/${totalQuestions}`;
+      document.getElementById('xpEarned').textContent = `+${xpGained}`;
+      
+      // Generate detailed results for each question
+      const detailsHTML = results.results.map((result, index) => {
+        const isCorrect = result.correct;
+        const userAnswerText = result.options && result.options[result.userAnswer] 
+          ? result.options[result.userAnswer] 
+          : 'No answer selected';
+        const correctAnswerText = result.options && result.options[result.correctAnswer]
+          ? result.options[result.correctAnswer]
+          : 'Unknown';
+        
+        return `
+          <div class="quiz-question" style="margin-bottom: 25px;">
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: ${isCorrect ? '#4ade80' : '#f87171'}; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                ${isCorrect ? '✓' : '✗'}
+              </div>
+              <h4 style="margin: 0; flex: 1;">Question ${index + 1}: ${result.question}</h4>
+            </div>
+            
+            <div class="quiz-option ${isCorrect ? 'correct' : 'incorrect'}" style="margin: 15px 0;">
+              <strong>Your answer:</strong> ${userAnswerText}
+              <span style="float: right; font-size: 20px;">${isCorrect ? '✅' : '❌'}</span>
+            </div>
+            
+            ${!isCorrect ? `
+              <div class="quiz-option correct" style="margin: 15px 0;">
+                <strong>Correct answer:</strong> ${correctAnswerText}
+                <span style="float: right; font-size: 20px;">✅</span>
+              </div>
+            ` : ''}
+            
+            <div class="explanation">
+              <strong>💡 Explanation:</strong><br><br>
+              ${result.explanation}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      document.getElementById('resultsDetails').innerHTML = detailsHTML;
+      
+      // Show performance message
+      let performanceMessage = '';
+      if (scorePercentage >= 90) {
+        performanceMessage = '<div class="alert alert-success" style="text-align: center; font-size: 18px;">🎉 Excellent! You\'re a cybersecurity expert!</div>';
+      } else if (scorePercentage >= 70) {
+        performanceMessage = '<div class="alert alert-info" style="text-align: center; font-size: 18px;">👍 Great job! You have a solid understanding!</div>';
+      } else if (scorePercentage >= 50) {
+        performanceMessage = '<div class="alert alert-info" style="text-align: center; font-size: 18px;">📚 Good effort! Review the explanations to improve.</div>';
+      } else {
+        performanceMessage = '<div class="alert alert-error" style="text-align: center; font-size: 18px;">💪 Keep learning! Practice makes perfect.</div>';
+      }
+      
+      document.getElementById('resultsDetails').insertAdjacentHTML('afterbegin', performanceMessage);
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Retake quiz
+    function retakeQuiz() {
+      if (currentQuiz) {
+        startQuiz(currentQuiz);
+      }
+    }
+
+    // Back to quiz list
+    function backToList() {
+      document.getElementById('quizListView').style.display = 'block';
+      document.getElementById('quizTakingView').style.display = 'none';
+      document.getElementById('resultsView').style.display = 'none';
+      
+      currentQuiz = null;
+      userAnswers = [];
+      quizData = null;
+      
+      // Reset submit button
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Quiz';
+      }
+      
+      window.scrollTo(0, 0);
+    }
+
+    // Initialize
+    loadQuizzes();
+  </script>
+</body>
+</html>

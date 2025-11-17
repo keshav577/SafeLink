@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeLink - Lesson</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <header>📖 Lesson</header>
+  
+  <nav>
+    <a href="/learning.html">← Back to Learning</a>
+    <a href="/dashboard.html">📊 Dashboard</a>
+  </nav>
+
+  <div class="container">
+    <div id="lessonContent">
+      <div class="loader"></div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 40px;">
+      <button class="btn" onclick="completeLesson()">✅ Mark as Complete</button>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script src="/js/theme.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const moduleId = urlParams.get('id');
+
+    async function loadLesson() {
+      try {
+        const response = await fetch(`${API_URL}/learning/modules/${moduleId}`, {
+          headers: getHeaders()
+        });
+        
+        const module = await response.json();
+        
+        document.getElementById('lessonContent').innerHTML = `
+          <div class="scenario-container">
+            <h1>${module.title}</h1>
+            <div class="module-meta" style="margin-bottom: 30px;">
+              <span class="badge-tag">${module.difficulty}</span>
+              <span>⏱️ ${module.estimated_time}</span>
+            </div>
+            
+            <div style="line-height: 2; font-size: 18px;">
+              ${getModuleContent(module.category)}
+            </div>
+          </div>
+        `;
+      } catch (error) {
+        showAlert('Failed to load lesson', 'error');
+      }
+    }
+
+    function getModuleContent(category) {
+      const content = {
+        passwords: `
+          <h2>🔐 Password Security Fundamentals</h2>
+          
+          <h3>Why Passwords Matter</h3>
+          <p>Your password is the first line of defense against unauthorized access. A weak password is like leaving your front door unlocked.</p>
+          
+          <h3>Characteristics of Strong Passwords:</h3>
+          <ul style="line-height: 2.2;">
+            <li>✅ At least 12 characters long</li>
+            <li>✅ Mix of uppercase and lowercase letters</li>
+            <li>✅ Include numbers and special symbols</li>
+            <li>✅ Avoid dictionary words</li>
+            <li>✅ No personal information (birthdate, name, etc.)</li>
+          </ul>
+          
+          <h3>Password Best Practices:</h3>
+          <div class="card" style="margin: 20px 0;">
+            <strong>❌ Bad:</strong> "password123" or "JohnDoe1990"<br>
+            <strong>✅ Good:</strong> "P@ssw0rd!2024#Secure" or use a password manager
+          </div>
+          
+          <h3>Use a Password Manager</h3>
+          <p>Password managers like Bitwarden, 1Password, or LastPass generate and store strong, unique passwords for all your accounts.</p>
+          
+          <h3>Enable Two-Factor Authentication (2FA)</h3>
+          <p>Add an extra layer of security by requiring a second verification step beyond your password.</p>
+        `,
+        phishing: `
+          <h2>🐟 Identifying Phishing Attacks</h2>
+          
+          <h3>What is Phishing?</h3>
+          <p>Phishing is a cyber attack where criminals impersonate legitimate organizations to steal your sensitive information.</p>
+          
+          <h3>🚨 Red Flags to Watch For:</h3>
+          <ul style="line-height: 2.2;">
+            <li>🔴 Urgent or threatening language ("Act now or account will be closed!")</li>
+            <li>🔴 Generic greetings ("Dear Customer" instead of your name)</li>
+            <li>🔴 Suspicious sender email addresses</li>
+            <li>🔴 Spelling and grammar errors</li>
+            <li>🔴 Requests for sensitive information</li>
+            <li>🔴 Unexpected attachments</li>
+            <li>🔴 Too-good-to-be-true offers</li>
+          </ul>
+          
+          <h3>How to Check Links:</h3>
+          <div class="card">
+            <strong>Hover (don't click!) over links to see the actual URL</strong><br>
+            Display text: "paypal.com"<br>
+            Actual URL: "paypa1-security.ru" ⚠️ SUSPICIOUS!
+          </div>
+          
+          <h3>What To Do If You Suspect Phishing:</h3>
+          <ul style="line-height: 2.2;">
+            <li>✅ Don't click any links or download attachments</li>
+            <li>✅ Contact the company directly using official contact info</li>
+            <li>✅ Report the email as phishing</li>
+            <li>✅ Delete the message</li>
+          </ul>
+        `,
+        mobile: `
+          <h2>📱 Mobile Device Security</h2>
+          
+          <h3>Your Phone Needs Protection Too!</h3>
+          <p>Mobile devices contain personal data, financial information, and access to all your accounts. Securing them is crucial.</p>
+          
+          <h3>Essential Mobile Security Steps:</h3>
+          <ul style="line-height: 2.2;">
+            <li>🔒 Use strong PIN/password or biometric lock</li>
+            <li>🔒 Enable automatic updates</li>
+            <li>🔒 Only download apps from official stores</li>
+            <li>🔒 Review app permissions carefully</li>
+            <li>🔒 Avoid public WiFi for sensitive activities</li>
+            <li>🔒 Enable "Find My Device" features</li>
+            <li>🔒 Use VPN on untrusted networks</li>
+          </ul>
+          
+          <h3>App Permission Red Flags:</h3>
+          <div class="card">
+            ⚠️ Flashlight app requesting access to contacts<br>
+            ⚠️ Game requesting access to your messages<br>
+            ⚠️ Wallpaper app requesting microphone access
+          </div>
+          
+          <h3>Public WiFi Dangers:</h3>
+          <p>Hackers can intercept data on public networks. Always use VPN and avoid accessing banking or sensitive accounts.</p>
+        `,
+        browsing: `
+          <h2>🌐 Safe Browsing Practices</h2>
+          
+          <h3>Navigate the Web Securely</h3>
+          <p>The internet is full of threats. Learning safe browsing habits protects you from malware, scams, and data theft.</p>
+          
+          <h3>Look for HTTPS:</h3>
+          <div class="card">
+            ✅ https://website.com (Encrypted connection)<br>
+            ❌ http://website.com (Unencrypted - avoid for sensitive data)
+          </div>
+          
+          <h3>Browser Security Tips:</h3>
+          <ul style="line-height: 2.2;">
+            <li>🛡️ Keep your browser updated</li>
+            <li>🛡️ Use privacy-focused extensions (uBlock Origin, Privacy Badger)</li>
+            <li>🛡️ Clear cookies and cache regularly</li>
+            <li>🛡️ Use incognito/private mode when needed</li>
+            <li>🛡️ Be cautious with browser extensions</li>
+            <li>🛡️ Check for padlock icon in address bar</li>
+          </ul>
+          
+          <h3>Avoiding Malicious Downloads:</h3>
+          <ul style="line-height: 2.2;">
+            <li>❌ Don't download from untrusted sources</li>
+            <li>❌ Don't click on pop-up ads</li>
+            <li>❌ Don't download email attachments from unknown senders</li>
+            <li>✅ Scan downloads with antivirus before opening</li>
+          </ul>
+          
+          <h3>Social Media Safety:</h3>
+          <p>Limit personal information sharing, use privacy settings, and be careful who you accept as friends/followers.</p>
+        `,
+        social: `
+          <h2>🎭 Social Engineering Defense</h2>
+          
+          <h3>What is Social Engineering?</h3>
+          <p>Social engineering manipulates people into revealing confidential information or performing actions that compromise security.</p>
+          
+          <h3>Common Tactics:</h3>
+          <ul style="line-height: 2.2;">
+            <li>🎯 Pretexting: Creating fake scenarios</li>
+            <li>🎯 Baiting: Offering something enticing</li>
+            <li>🎯 Phishing: Fraudulent emails/messages</li>
+            <li>🎯 Tailgating: Following into restricted areas</li>
+            <li>🎯 Impersonation: Pretending to be someone else</li>
+          </ul>
+          
+          <h3>Real-World Example:</h3>
+          <div class="card">
+            <strong>Scenario:</strong> Someone calls claiming to be from IT support, saying they need your password to "fix a problem."<br><br>
+            <strong>🚨 This is social engineering!</strong> Real IT never asks for passwords.
+          </div>
+          
+          <h3>Defense Strategies:</h3>
+          <ul style="line-height: 2.2;">
+            <li>🛡️ Verify identity before sharing information</li>
+            <li>🛡️ Be skeptical of unsolicited requests</li>
+            <li>🛡️ Don't let urgency override caution</li>
+            <li>🛡️ Follow established procedures</li>
+            <li>🛡️ When in doubt, report to security team</li>
+          </ul>
+          
+          <h3>Protecting Personal Information:</h3>
+          <p>Be mindful of what you share on social media. Attackers use public information to make attacks more convincing.</p>
+        `
+      };
+      
+      return content[category] || '<p>Lesson content coming soon!</p>';
+    }
+
+    async function completeLesson() {
+      try {
+        const response = await fetch(`${API_URL}/learning/modules/${moduleId}/complete`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify({ score: 100 })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          showXPPopup(data.xpGained);
+          showAlert('Lesson completed! Well done! 🎉', 'success');
+          setTimeout(() => window.location.href = '/learning.html', 2000);
+        }
+      } catch (error) {
+        showAlert('Failed to save progress', 'error');
+      }
+    }
+
+    loadLesson();
+  </script>
+</body>
+</html>
